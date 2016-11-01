@@ -64,13 +64,18 @@ class Application(object):
         for pattern in urlpatterns:
             if hasattr(pattern, 'url_patterns'):
                 self.post_process_urls(pattern.url_patterns)
-            if not hasattr(pattern, '_callback'):
+            if not hasattr(pattern, '_callback') and not hasattr(pattern, 'callback'):
                 continue
             # Look for a custom decorator
             decorator = self.get_url_decorator(pattern)
             if decorator:
                 # Nasty way of modifying a RegexURLPattern
-                pattern._callback = decorator(pattern._callback)
+                if hasattr(pattern, '_callback'):
+                    # Django < 1.10
+                    pattern._callback = decorator(pattern._callback)
+                else:
+                    # Django >= 1.10
+                    pattern.callback = decorator(pattern.callback)
         return urlpatterns
 
     def get_permissions(self, url):
